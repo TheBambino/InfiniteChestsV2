@@ -70,7 +70,7 @@ namespace InfChests
 					bool emptySlots = false;
 					bool stacking = false;
 					//if player has access to chest
-					if ((nearbyChests[i].userid == player.User.ID || nearbyChests[i].userid == -1 || nearbyChests[i].isPublic || player.HasPermission("ic.edit")) && !InfChests.playerData.Values.Any(p => p.dbid == nearbyChests[i].id) && nearbyChests[i].refillTime == -1)
+					if ((nearbyChests[i].userid == player.Account.ID || nearbyChests[i].userid == -1 || nearbyChests[i].isPublic || player.HasPermission("ic.edit")) && !InfChests.playerData.Values.Any(p => p.dbid == nearbyChests[i].id) && nearbyChests[i].refillTime == -1)
 					{
 						//foreach slot in chest
 						for (int j = 0; j < nearbyChests[i].items.Length; j++)
@@ -121,7 +121,7 @@ namespace InfChests
 			//update players
 			foreach(KeyValuePair<int, Item> kvp in slotInfo)
 			{
-				NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, "", index, kvp.Key, kvp.Value.prefix, kvp.Value.stack, kvp.Value.type);
+				NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, null, index, kvp.Key, kvp.Value.prefix, kvp.Value.stack, kvp.Value.type);
 			}
 			//update database
 			for (int i = 0; i < nearbyChests.Count; i++)

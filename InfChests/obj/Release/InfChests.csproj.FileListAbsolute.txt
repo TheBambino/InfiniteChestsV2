@@ -1,2 +1,0 @@
-C:\InfiniteChestsV2\InfChests\obj\Release\InfChests.csprojAssemblyReference.cache
-C:\InfiniteChestsV2\InfChests\obj\Release\InfChests.csproj.CoreCompileInputs.cache
