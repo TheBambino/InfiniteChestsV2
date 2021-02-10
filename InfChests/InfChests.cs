@@ -123,7 +123,7 @@ namespace InfChests
 							playerData[index].dbid = -1;
 							playerData[index].oldChestItems = new Item[40];
 							playerData[index].newChestItems = new Item[40];
-							NetMessage.SendData((int)PacketTypes.SyncPlayerChestIndex, -1, index, "", index, -1);
+							NetMessage.SendData((int)PacketTypes.SyncPlayerChestIndex, -1, index, null, index, -1);
 						}
 
 						if (lockChests)
@@ -191,7 +191,7 @@ namespace InfChests
 
 						if (chestid == -1 && playerData[index].dbid != -1)
 						{
-							NetMessage.SendData((int)PacketTypes.SyncPlayerChestIndex, -1, index, "", index, -1);
+							NetMessage.SendData((int)PacketTypes.SyncPlayerChestIndex, -1, index, null, index, -1);
 							playerData[index].lockChests = true;
 
 							await Task.Factory.StartNew(() => {
@@ -229,7 +229,7 @@ namespace InfChests
 							TShock.Log.Info($"ChestID: {chestid} | X: {tilex} | Y: {tiley}");
 						}
 						break;
-					case PacketTypes.TileKill:
+					case PacketTypes.PlaceChest:
 						if (lockChests)
 						{
 							TShock.Players[index].SendWarningMessage("Chest conversion in progress. Please wait.");
@@ -267,7 +267,7 @@ namespace InfChests
 								DB.addChest(new InfChest()
 								{
 									items = Main.chest[chestnum].item,
-									userid = TShock.Players[index].HasPermission("ic.protect") ? TShock.Players[index].User.ID : -1,
+									userid = TShock.Players[index].HasPermission("ic.protect") ? TShock.Players[index].Account.ID : -1,
 									x = Main.chest[chestnum].x,
 									y = Main.chest[chestnum].y,
 									refillTime = -1
@@ -294,7 +294,7 @@ namespace InfChests
 								{
 									WorldGen.KillTile(tilex, tiley);
 								}
-								else if (chest2.userid != -1 && !player.HasPermission("ic.edit") && chest2.userid != player.User.ID)
+								else if (chest2.userid != -1 && !player.HasPermission("ic.edit") && chest2.userid != player.Account.ID)
 								{
 									player.SendErrorMessage("This chest is protected.");
 								}
@@ -393,7 +393,7 @@ namespace InfChests
 			{
 				case chestAction.info:
 					player.SendInfoMessage($"X: {chest.x} | Y: {chest.y}");
-					string owner = chest.userid == -1 ? "(None)" : TShock.Users.GetUserByID(chest.userid).Name;
+					string owner = chest.userid == -1 ? "(None)" : TShock.UserAccounts.GetUserAccountByID(chest.userid).Name;
 					string ispublic = chest.isPublic ? " (Public)" : "";
 					string isrefill = chest.refillTime > -1 ? $" (Refill: {chest.refillTime})" : "";
 					player.SendInfoMessage($"Chest Owner: {owner}{ispublic}{isrefill}");
@@ -406,20 +406,20 @@ namespace InfChests
 						player.SendInfoMessage("Groups Allowed: (None)");
 					if (chest.users.Count > 0)
 					{
-						string info = string.Join(", ", chest.users.Select(p => TShock.Users.GetUserByID(p).Name));
+						string info = string.Join(", ", chest.users.Select(p => TShock.UserAccounts.GetUserAccountByID(p).Name));
 						player.SendInfoMessage($"Users Allowed: {info}");
 					}
 					else
 						player.SendInfoMessage("Users Allowed: (None)");
 					break;
 				case chestAction.protect:
-					if (chest.userid == player.User.ID)
+					if (chest.userid == player.Account.ID)
 						player.SendErrorMessage("This chest is already claimed by you!");
 					else if (chest.userid != -1 && !player.HasPermission("ic.edit"))
 						player.SendErrorMessage("This chest is already claimed by someone else!");
 					else
 					{
-						if (DB.setUserID(chest.id, player.User.ID))
+						if (DB.setUserID(chest.id, player.Account.ID))
 							player.SendSuccessMessage("This chest is now claimed by you!");
 						else
 						{
@@ -429,7 +429,7 @@ namespace InfChests
 					}
 					break;
 				case chestAction.unProtect:
-					if (chest.userid != player.User.ID && !player.HasPermission("ic.edit"))
+					if (chest.userid != player.Account.ID && !player.HasPermission("ic.edit"))
 						player.SendErrorMessage("This chest is not yours!");
 					else if (chest.userid == -1)
 						player.SendErrorMessage("This chest is not claimed!");
@@ -445,7 +445,7 @@ namespace InfChests
 					}
 					break;
 				case chestAction.allowUser:
-					if (chest.userid != player.User.ID && !player.HasPermission("ic.edit"))
+					if (chest.userid != player.Account.ID && !player.HasPermission("ic.edit"))
 						player.SendErrorMessage("This chest is not yours!");
 					else if (chest.userid == -1)
 						player.SendErrorMessage("This chest is not claimed!");
@@ -462,7 +462,7 @@ namespace InfChests
 					}
 					break;
 				case chestAction.removeUser:
-					if (chest.userid != player.User.ID && !player.HasPermission("ic.edit"))
+					if (chest.userid != player.Account.ID && !player.HasPermission("ic.edit"))
 						player.SendErrorMessage("This chest is not yours!");
 					else if (chest.userid == -1)
 						player.SendErrorMessage("This chest is not claimed!");
@@ -479,7 +479,7 @@ namespace InfChests
 					}
 					break;
 				case chestAction.allowGroup:
-					if (chest.userid != player.User.ID && !player.HasPermission("ic.edit"))
+					if (chest.userid != player.Account.ID && !player.HasPermission("ic.edit"))
 						player.SendErrorMessage("This chest is not yours!");
 					else if (chest.userid == -1)
 						player.SendErrorMessage("This chest is not claimed!");
@@ -496,7 +496,7 @@ namespace InfChests
 					}
 					break;
 				case chestAction.removeGroup:
-					if (chest.userid != player.User.ID && !player.HasPermission("ic.edit"))
+					if (chest.userid != player.Account.ID && !player.HasPermission("ic.edit"))
 						player.SendErrorMessage("This chest is not yours!");
 					else if (chest.userid == -1)
 						player.SendErrorMessage("This chest is not claimed!");
@@ -513,7 +513,7 @@ namespace InfChests
 					}
 					break;
 				case chestAction.togglePublic:
-					if (chest.userid != player.User.ID && !player.HasPermission("ic.edit"))
+					if (chest.userid != player.Account.ID && !player.HasPermission("ic.edit"))
 						player.SendErrorMessage("This chest is not yours!");
 					else if (chest.userid == -1)
 						player.SendErrorMessage("This chest is not claimed!");
@@ -532,7 +532,7 @@ namespace InfChests
 					}
 					break;
 				case chestAction.setRefill:
-					if (chest.userid != player.User.ID && !player.HasPermission("ic.edit"))
+					if (chest.userid != player.Account.ID && !player.HasPermission("ic.edit"))
 						player.SendErrorMessage("This chest is not yours!");
 					else if (chest.userid == -1)
 						player.SendErrorMessage("This chest is not claimed!");
@@ -556,7 +556,7 @@ namespace InfChests
 					}
 					break;
 				case chestAction.setName:
-					if (chest.userid != player.User.ID && !player.HasPermission("ic.edit"))
+					if (chest.userid != player.Account.ID && !player.HasPermission("ic.edit"))
 						player.SendErrorMessage("This chest is not yours!");
 					else if (chest.userid == -1)
 						player.SendErrorMessage("This chest is not claimed!");
@@ -572,7 +572,7 @@ namespace InfChests
 					}
 					break;
 				case chestAction.loadName:
-					if (chest.userid != player.User.ID && !player.HasPermission("ic.edit") && chest.userid != -1)
+					if (chest.userid != player.Account.ID && !player.HasPermission("ic.edit") && chest.userid != -1)
 						player.SendErrorMessage("This chest is not yours!");
 					else
 					{
@@ -588,7 +588,7 @@ namespace InfChests
 				case chestAction.none:
 					if (chest.userid != -1 && !player.IsLoggedIn && !chest.isPublic && !chest.groups.Contains(TShock.Config.DefaultGuestGroupName))
 						player.SendErrorMessage("You must be logged in to use this chest.");
-					else if (player.IsLoggedIn && !chest.isPublic && chest.userid != -1 && !player.HasPermission("ic.edit") && chest.userid != player.User.ID && !chest.users.Contains(player.User.ID) && !chest.groups.Contains(player.Group.Name))
+					else if (player.IsLoggedIn && !chest.isPublic && chest.userid != -1 && !player.HasPermission("ic.edit") && chest.userid != player.Account.ID && !chest.users.Contains(player.Account.ID) && !chest.groups.Contains(player.Group.Name))
 						player.SendErrorMessage("This chest is protected.");
 					else
 					{
@@ -684,7 +684,7 @@ namespace InfChests
 							}
 							player.SendData(PacketTypes.ChestOpen, "", chestid, chest.x, chest.y);
 
-							NetMessage.SendData((int)PacketTypes.SyncPlayerChestIndex, -1, index, "", index, chestid);
+							NetMessage.SendData((int)PacketTypes.SyncPlayerChestIndex, -1, index, null, index, chestid);
 						}
 						catch (Exception ex)
 						{
@@ -788,19 +788,19 @@ namespace InfChests
 						break;
 					}
 					string name = string.Join(" ", args.Parameters.GetRange(1, args.Parameters.Count - 1));
-					if (Main.itemName.ToList().Exists(p => p.ToLower() == name.ToLower()))
+					if (Main.item.ToList().Exists(p => p.Name.ToLower() == name.ToLower()))
 					{
-						int itemid = Main.itemName.ToList().FindIndex(p => p.ToLower() == name.ToLower());
+						int itemid = Main.item.ToList().FindIndex(p => p.Name.ToLower() == name.ToLower());
 						int count = DB.searchChests(itemid);
-						args.Player.SendSuccessMessage($"There are {count} chest(s) with {Main.itemName[itemid]}(s).");
+						args.Player.SendSuccessMessage($"There are {count} chest(s) with {Main.item[itemid]}(s).");
 					}
-					else if (Main.itemName.ToList().Count(p => p.ToLower().Contains(name.ToLower())) == 1)
+					else if (Main.item.ToList().Count(p => p.Name.ToLower().Contains(name.ToLower())) == 1)
 					{
-						int itemid = Main.itemName.ToList().FindIndex(p => p.ToLower().Contains(name.ToLower()));
+						int itemid = Main.item.ToList().FindIndex(p => p.Name.ToLower().Contains(name.ToLower()));
 						int count = DB.searchChests(itemid);
-						args.Player.SendSuccessMessage($"There are {count} chest(s) with {Main.itemName[itemid]}(s).");
+						args.Player.SendSuccessMessage($"There are {count} chest(s) with {Main.item[itemid]}(s).");
 					}
-					else if (Main.itemName.ToList().Exists(p => p.ToLower().Contains(name.ToLower())))
+					else if (Main.item.ToList().Exists(p => p.Name.ToLower().Contains(name.ToLower())))
 					{
 						args.Player.SendErrorMessage($"Multiple matches found for item '{name}'");
 					}
@@ -820,7 +820,7 @@ namespace InfChests
 					else
 					{
 						name = string.Join(" ", args.Parameters.GetRange(1, args.Parameters.Count - 1));
-						var user = TShock.Users.GetUserByName(name);
+						var user = TShock.UserAccounts.GetUserAccountByName(name);
 
 						if (user == null)
 						{
@@ -843,7 +843,7 @@ namespace InfChests
 					else
 					{
 						name = string.Join(" ", args.Parameters.GetRange(1, args.Parameters.Count - 1));
-						var user = TShock.Users.GetUserByName(name);
+						var user = TShock.UserAccounts.GetUserAccountByName(name);
 
 						if (user == null)
 						{
@@ -1069,7 +1069,7 @@ namespace InfChests
 			if (converted > 0)
 			{
 				TSPlayer.Server.SendInfoMessage("[InfChests] Converted " + converted + " chest(s).");
-				WorldFile.saveWorld();
+				WorldFile.SaveWorld();
 			}
 			return converted;
 		}
